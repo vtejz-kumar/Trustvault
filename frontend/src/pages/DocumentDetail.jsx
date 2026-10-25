@@ -36,11 +36,14 @@ function DocumentDetail() {
       if (!res.ok) throw new Error('Download failed');
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = window.document.createElement('a');
       a.href = url;
       a.download = document.file_name;
+      a.style.display = 'none';
+      window.document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
+      a.remove();
+      window.setTimeout(() => window.URL.revokeObjectURL(url), 1000);
     } catch (err) {
       setError(err.message);
     }
