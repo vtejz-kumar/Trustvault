@@ -1,8 +1,30 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
+
+// Auto-initialize SQLite DB tables on startup
+async function ensureDatabase() {
+  try {
+    const db = require('./config/database');
+    const schemaPath = path.resolve(__dirname, '..', 'database', 'schema.sql');
+    if (fs.existsSync(schemaPath)) {
+      const schema = fs.readFileSync(schemaPath, 'utf8');
+      const statements = schema.split(';').filter(s => s.trim());
+      for (const stmt of statements) {
+        if (stmt.trim()) {
+          try { await db.execute(stmt); } catch (e) { /* table already exists */ }
+        }
+      }
+      console.log('Database schema ready.');
+    }
+  } catch (err) {
+    console.error('DB init warning:', err.message);
+  }
+}
+
 
 const app = express();
 
@@ -56,8 +78,10 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`TrustVault backend running on port ${PORT}`);
+ensureDatabase().then(() => {
+  app.listen(PORT, () => {
+    console.log(`TrustVault backend running on port ${PORT}`);
+  });
 });
 
 module.exports = app;

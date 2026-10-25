@@ -6,5 +6,11 @@
   "devCommand": "npm start",
   "github": {
     "enabled": false
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }

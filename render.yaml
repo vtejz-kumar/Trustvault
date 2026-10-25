@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: trustvault-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: USE_SQLITE
+        value: "true"
+      - key: DB_PATH
+        value: /tmp/trustvault.db
+      - key: JWT_SECRET
+        generateValue: true
+      - key: NODE_ENV
+        value: production
+    healthCheckPath: /api/health

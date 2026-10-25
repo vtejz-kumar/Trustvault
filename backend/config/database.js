@@ -1,5 +1,3 @@
-const mysql = require('mysql2/promise');
-const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 require('dotenv').config();
 
@@ -8,35 +6,14 @@ const USE_SQLITE = process.env.USE_SQLITE === 'true' || !process.env.DB_HOST;
 let pool;
 
 if (USE_SQLITE) {
-  const dbPath = path.resolve(__dirname, '..', '..', 'database', 'trustvault.db');
-  const sqliteDb = new sqlite3.Database(dbPath);
-  
-  // Enable foreign keys
-  sqliteDb.run('PRAGMA foreign_keys = ON');
-  sqliteDb.run('PRAGMA journal_mode = WAL');
-  
-  // Promisify sqlite3 methods
-  const run = (sql, params = []) => new Promise((resolve, reject) => {
-    sqliteDb.run(sql, params, function(err) {
-      if (err) reject(err);
-      else resolve({ insertId: this.lastID, affectedRows: this.changes });
-    });
-  });
-  
-  const all = (sql, params = []) => new Promise((resolve, reject) => {
-    sqliteDb.all(sql, params, (err, rows) => {
-      if (err) reject(err);
-      else resolve(rows);
-    });
-  });
-  
-  const get = (sql, params = []) => new Promise((resolve, reject) => {
-    sqliteDb.get(sql, params, (err, row) => {
-      if (err) reject(err);
-      else resolve(row);
-    });
-  });
-  
+  const Database = require('better-sqlite3');
+  const dbPath = process.env.DB_PATH || path.resolve(__dirname, '..', '..', 'database', 'trustvault.db');
+  const db = new Database(dbPath);
+
+  // Enable foreign keys and WAL mode
+  db.pragma('foreign_keys = ON');
+  db.pragma('journal_mode = WAL');
+
   // Convert MySQL syntax to SQLite
   function convertSql(sql) {
     return sql
@@ -49,28 +26,25 @@ if (USE_SQLITE) {
       .replace(/VARCHAR\(\d+\)/g, 'TEXT')
       .replace(/TIMESTAMP/g, 'DATETIME')
       .replace(/CURRENT_DATETIME/g, 'CURRENT_TIMESTAMP')
-      .replace(/DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP/g, 'DEFAULT CURRENT_TIMESTAMP')
       .replace(/DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP/gi, 'DEFAULT CURRENT_TIMESTAMP')
       .replace(/ON UPDATE CURRENT_TIMESTAMP/g, '')
       .replace(/DEFAULT\s+$/gm, 'DEFAULT CURRENT_TIMESTAMP')
       .replace(/UNIQUE KEY \w+ \(/g, 'UNIQUE (')
-      .replace(/ON DELETE CASCADE/g, 'ON DELETE CASCADE')
       .replace(/INSERT IGNORE/gi, 'INSERT OR IGNORE')
       .replace(/ON DUPLICATE KEY UPDATE\s+/gi, 'ON CONFLICT(document_id, user_id) DO UPDATE SET ');
   }
-  
+
   pool = {
     execute: async (sql, params = []) => {
       const sqliteSql = convertSql(sql);
       const isSelect = sqliteSql.trim().toUpperCase().startsWith('SELECT');
-      
       try {
         if (isSelect) {
-          const rows = await all(sqliteSql, params);
+          const rows = db.prepare(sqliteSql).all(...(Array.isArray(params) ? params : [params]));
           return [rows, []];
         } else {
-          const result = await run(sqliteSql, params);
-          return [result, []];
+          const result = db.prepare(sqliteSql).run(...(Array.isArray(params) ? params : [params]));
+          return [{ insertId: result.lastInsertRowid, affectedRows: result.changes }, []];
         }
       } catch (err) {
         console.error('SQLite error:', err.message);
@@ -79,11 +53,12 @@ if (USE_SQLITE) {
         throw err;
       }
     },
-    end: () => new Promise((resolve) => sqliteDb.close(resolve))
+    end: () => { db.close(); }
   };
-  
-  console.log('Using SQLite database (development mode)');
+
+  console.log('Using SQLite database (better-sqlite3)');
 } else {
+  const mysql = require('mysql2/promise');
   pool = mysql.createPool({
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
