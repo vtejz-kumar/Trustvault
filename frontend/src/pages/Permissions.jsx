@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import { api } from '../services/api';
 
 function Permissions() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [permissions, setPermissions] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,11 +12,7 @@ function Permissions() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  useEffect(() => {
-    loadData();
-  }, [id]);
-
-  async function loadData() {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const [perms, userList] = await Promise.all([
@@ -31,7 +26,11 @@ function Permissions() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [id]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   async function handleGrant(e) {
     e.preventDefault();

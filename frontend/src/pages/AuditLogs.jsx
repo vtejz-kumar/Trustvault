@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
 
 function AuditLogs() {
@@ -18,11 +18,7 @@ function AuditLogs() {
 
   const actions = ['UPLOAD', 'VIEW', 'DOWNLOAD', 'EDIT', 'DELETE', 'GRANT_PERMISSION', 'REVOKE_PERMISSION', 'LOGIN', 'LIST_PERMISSIONS', 'DENIED_ACCESS'];
 
-  useEffect(() => {
-    loadLogs();
-  }, [page, filters]);
-
-  async function loadLogs() {
+  const loadLogs = useCallback(async () => {
     setLoading(true);
     try {
       const data = await api.getAuditLogs({
@@ -37,7 +33,11 @@ function AuditLogs() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [page, limit, filters]);
+
+  useEffect(() => {
+    loadLogs();
+  }, [loadLogs]);
 
   function handleFilterChange(key, value) {
     setFilters(prev => ({ ...prev, [key]: value }));

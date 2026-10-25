@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { api } from '../services/api';
 
@@ -13,11 +13,7 @@ function DocumentDetail() {
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({ name: '', category: '' });
 
-  useEffect(() => {
-    loadDocument();
-  }, [id]);
-
-  async function loadDocument() {
+  const loadDocument = useCallback(async () => {
     setLoading(true);
     try {
       const data = await api.getDocument(id);
@@ -28,7 +24,11 @@ function DocumentDetail() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [id]);
+
+  useEffect(() => {
+    loadDocument();
+  }, [loadDocument]);
 
   async function handleDownload() {
     try {

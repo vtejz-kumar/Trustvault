@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -9,11 +9,7 @@ function Dashboard() {
   const [recentDocs, setRecentDocs] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadDashboard();
-  }, []);
-
-  async function loadDashboard() {
+  const loadDashboard = useCallback(async () => {
     try {
       const [docsRes] = await Promise.all([
         api.listDocuments({ limit: 5, page: 1 })
@@ -31,7 +27,11 @@ function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [user]);
+
+  useEffect(() => {
+    loadDashboard();
+  }, [loadDashboard]);
 
   return (
     <div className="container" style={{ paddingTop: '2rem', paddingBottom: '2rem' }}>
