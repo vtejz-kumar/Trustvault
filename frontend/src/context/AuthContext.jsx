@@ -54,6 +54,24 @@ export function AuthProvider({ children }) {
     return data.user;
   }
 
+  async function register(name, email, password, role) {
+    const res = await fetch(`${API_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password, role })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Registration failed');
+    }
+
+    localStorage.setItem('token', data.token);
+    setUser(data.user);
+    return data.user;
+  }
+
   function logout() {
     localStorage.removeItem('token');
     setUser(null);
@@ -68,6 +86,7 @@ export function AuthProvider({ children }) {
     user,
     loading,
     login,
+    register,
     logout,
     getAuthHeaders,
     isAuthenticated: !!user,

@@ -10,7 +10,7 @@ function Register() {
   const [role, setRole] = useState('VIEWER');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { register } = useAuth();
   const navigate = useNavigate();
 
   async function handleSubmit(e) {
@@ -30,27 +30,7 @@ function Register() {
     setLoading(true);
     
     try {
-      await login(email, password); // This will fail for new users, but we'll use the register endpoint directly
-      // Actually, we need to call the register endpoint directly since login will fail for new users
-    } catch (err) {
-      // Expected to fail for new users
-    }
-    
-    try {
-      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
-      const res = await fetch(`${API_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, role })
-      });
-      
-      const data = await res.json();
-      
-      if (!res.ok) {
-        throw new Error(data.error || 'Registration failed');
-      }
-      
-      localStorage.setItem('token', data.token);
+      await register(name, email, password, role);
       navigate('/dashboard');
     } catch (err) {
       setError(err.message);
