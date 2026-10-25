@@ -4,9 +4,6 @@
   "outputDirectory": "build",
   "installCommand": "npm install",
   "devCommand": "npm start",
-  "github": {
-    "enabled": false
-  },
   "rewrites": [
     {
       "source": "/(.*)",
