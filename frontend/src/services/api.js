@@ -1,4 +1,4 @@
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+const API_URL = process.env.REACT_APP_API_URL || 'https://trustvault-vfcj.onrender.com/api';
 
 async function request(endpoint, options = {}) {
   const token = localStorage.getItem('token');
@@ -20,7 +20,7 @@ async function request(endpoint, options = {}) {
   }
 
   const data = await res.json().catch(() => ({}));
-  
+
   if (!res.ok) {
     throw new Error(data.error || `Request failed: ${res.status}`);
   }

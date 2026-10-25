@@ -2,7 +2,7 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 
 const AuthContext = createContext(null);
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+const API_URL = process.env.REACT_APP_API_URL || 'https://trustvault-vfcj.onrender.com/api';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -42,13 +42,13 @@ export function AuthProvider({ children }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     });
-    
+
     const data = await res.json();
-    
+
     if (!res.ok) {
       throw new Error(data.error || 'Login failed');
     }
-    
+
     localStorage.setItem('token', data.token);
     setUser(data.user);
     return data.user;
