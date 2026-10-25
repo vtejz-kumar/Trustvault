@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 function Login() {
@@ -65,14 +65,9 @@ function Login() {
           </button>
         </form>
         
-        <div style={{ marginTop: '1.5rem', padding: '1rem', backgroundColor: '#f3f4f6', borderRadius: '6px', fontSize: '0.875rem' }}>
-          <strong>Demo Accounts:</strong>
-          <ul style={{ marginTop: '0.5rem', paddingLeft: '1.25rem', lineHeight: '1.8' }}>
-            <li>admin@trustvault.com / admin123</li>
-            <li>owner@trustvault.com / owner123</li>
-            <li>viewer@trustvault.com / viewer123</li>
-          </ul>
-        </div>
+        <p style={{ textAlign: 'center', marginTop: '1.5rem', color: '#6b7280', fontSize: '0.875rem' }}>
+          Don't have an account? <Link to="/register">Create one</Link>
+        </p>
       </div>
     </div>
   );

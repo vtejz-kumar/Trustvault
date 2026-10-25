@@ -86,4 +86,69 @@ async function getProfile(req, res) {
   }
 }
 
-module.exports = { login, getProfile };
+async function register(req, res) {
+  const { name, email, password, role } = req.body;
+  const ip = req.ip || req.connection.remoteAddress;
+  const userAgent = req.get('user-agent');
+  
+  if (!name || !email || !password || !role) {
+    return res.status(400).json({ error: 'Name, email, password, and role required' });
+  }
+  
+  if (!['OWNER', 'VIEWER'].includes(role)) {
+    return res.status(400).json({ error: 'Invalid role. Must be OWNER or VIEWER' });
+  }
+  
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  }
+  
+  try {
+    const [rows] = await pool.execute('SELECT * FROM users WHERE email = ?', [email]);
+    if (rows[0]) {
+      await auditService.log({
+        userId: null,
+        action: 'REGISTER',
+        result: 'DENIED',
+        ipAddress: ip,
+        userAgent,
+        metadata: { email, reason: 'Email already exists' }
+      });
+      return res.status(409).json({ error: 'Email already registered' });
+    }
+    
+    const passwordHash = await bcrypt.hash(password, 10);
+    const { v4: uuidv4 } = require('uuid');
+    const userId = uuidv4();
+    
+    await pool.execute(
+      'INSERT INTO users (id, name, email, password_hash, role) VALUES (?, ?, ?, ?, ?)',
+      [userId, name, email, passwordHash, role]
+    );
+    
+    const token = jwt.sign(
+      { id: userId, email, role, name },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+    
+    await auditService.log({
+      userId,
+      action: 'REGISTER',
+      result: 'SUCCESS',
+      ipAddress: ip,
+      userAgent,
+      metadata: { role }
+    });
+    
+    res.status(201).json({
+      token,
+      user: { id: userId, name, email, role }
+    });
+  } catch (err) {
+    console.error('Register error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+}
+
+module.exports = { login, getProfile, register };

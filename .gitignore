@@ -27,6 +27,7 @@ Thumbs.db
 # Test files
 test-*.js
 *.test.js
+!backend/tests/security.test.js
 
 # Database
 database/*.db
