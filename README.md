@@ -310,6 +310,13 @@ JWT_SECRET=your-256-bit-random-secret
 PORT=3001
 ```
 
+To provision an administrator at backend startup, also set `ADMIN_EMAIL` and
+`ADMIN_PASSWORD` in the backend environment. Use a unique email and a password
+of at least 12 characters. The password is stored as a hash; if that email
+already belongs to an admin, its password is synchronized from the configured
+environment value at startup. Startup fails rather than promoting an existing
+non-admin account.
+
 **Frontend (`.env`):**
 ```env
 REACT_APP_API_URL=https://your-api-domain.com/api
