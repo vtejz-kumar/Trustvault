@@ -178,7 +178,10 @@ async function listPermissions(req, res) {
 
 async function listUsers(req, res) {
   try {
-    const [rows] = await pool.execute('SELECT id, name, email, role FROM users WHERE role != "ADMIN" ORDER BY name');
+    const [rows] = await pool.execute(
+      'SELECT id, name, email, role FROM users WHERE role != ? ORDER BY name',
+      ['ADMIN']
+    );
     res.json(rows);
   } catch (err) {
     console.error('List users error:', err);
